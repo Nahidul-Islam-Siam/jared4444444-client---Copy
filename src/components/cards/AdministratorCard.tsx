@@ -10,8 +10,9 @@ interface AdministratorCardProps {
   onDetails: (id: string) => void;
   removing?: boolean;
 }
-
-export default function AdministratorCard({ 
+// ADSfadsfdasasdfdasfasddfsgfrg
+// asdfasdfads
+export default function AdministratorCard({    
   administrator, 
   onRemove, 
   onDetails 

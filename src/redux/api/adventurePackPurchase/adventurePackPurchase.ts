@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TUser } from "@/type/type";
 import { TAdventurePack } from "../adventurePack/adventurePackApi";
 import baseApi from "../baseApi";
@@ -23,6 +24,7 @@ export interface TAdventurePackPurchase {
   paymentStatus: string;
   createdAt: string;
   updatedAt: string;
+  filter:any
 }
 
 // Meta info for pagination
@@ -40,6 +42,7 @@ interface TGetAdventurePackPurchasesResponse {
   message: string;
   meta: TMeta;
   Data: TAdventurePackPurchase[];
+  filter:any
 }
 
 // RTK Query

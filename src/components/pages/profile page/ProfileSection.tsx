@@ -17,6 +17,9 @@ import {
 import { useGetBookingByIdQuery } from "@/redux/api/bookings/bookings";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/services/user/authSlice";
+import ActivePlanPage from "./activePlan/activePlan";
+import ActiveAdventurePlanPage from "./activePlan/activePlan";
+import ActiveSubscribePage from "./activePlan/activeSubscribtion";
 
 const { Title } = Typography;
 
@@ -204,6 +207,10 @@ export default function ProfileSection() {
           editable={true}
         />
 
+
+
+      <ActiveAdventurePlanPage/>
+      <ActiveSubscribePage/>
         {/* Change Password Form */}
         <Card className="shadow-sm">
           <Title level={5} className="!text-gray-700 !mb-6 !text-xl">
@@ -307,7 +314,7 @@ export default function ProfileSection() {
         </Card>
 
         {/* Active Plan Section - Using static data as requested */}
-        <ActivePlan allPlan={allPlan} />
+    
       </Container>
     </section>
   );
