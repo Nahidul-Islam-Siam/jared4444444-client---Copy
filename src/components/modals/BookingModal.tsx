@@ -1,89 +1,159 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Modal, Spin, Button, Result } from "antd";
-import { useEffect, useState, useMemo } from "react";
-import {
-  Calendar,
-  CheckCircle2,
-  CalendarX,
-  Users,
-  Waves,
-  Sun,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useMemo } from "react";
+import { Modal, Button, Result, Spin, Alert } from "antd";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import dayjs from "dayjs";
+import { motion } from "framer-motion";
 import { useGetRentByIdQuery } from "@/redux/api/rent/rentApi";
 import { useSelector } from "react-redux";
+import Link from "next/link";
+import { useGetAllAvailableDatesQuery } from "@/redux/api/availableDate/availableDateApi";
+import { useBookWithSubscriptionMutation } from "@/redux/api/bookings/bookApi";
+
 
 interface BookingModalProps {
   open: boolean;
   onClose: () => void;
-  rentId: string;
+  rentId: string; // This is jetSkyId
   jetName?: string;
   jetHp?: number;
   jetPrice?: number;
+  model?: string;
+  subscriptionPurchaseId: string; // Pass this from user's active subscription
 }
 
 export default function BookingModal({
   open,
   onClose,
   rentId,
-  jetHp,
   jetName,
+  jetHp,
   jetPrice,
+  model,
+  subscriptionPurchaseId, // Comes from user's active subscription
 }: BookingModalProps) {
-  const [loading, setLoading] = useState(true);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState("08:00 AM");
+  const [drivingLicense, setDrivingLicense] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data } = useGetRentByIdQuery(rentId);
-  const rent = data?.Data?.[0];
+  const {  data:rentData, isLoading: rentLoading } = useGetRentByIdQuery(rentId);
+  const rent = rentData?.Data?.[0];
 
-  // get role from redux
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userRole = useSelector((state: any) => state.auth.user?.role);
-
-  // booking dates from DB (already booked/unavailable)
-const bookedDates = useMemo(
-  () =>
-    (rent?.bookingDate || []).map((d: string) => dayjs(d).format("YYYY-MM-DD")),
-  [rent?.bookingDate]
-);
-
-  // compute available dates
-  const allowedDays = useMemo(
-    () => (userRole === "Admin" || userRole === "Administrator" ? 30 : 14),
-    [userRole]
+  const { data: jetData, isLoading: availabilityLoading } = useGetAllAvailableDatesQuery(
+    { model: model || "" },
+    { skip: !open || !model }
   );
 
-  useEffect(() => {
-    if (open) {
-      setLoading(true);
-      setConfirmed(false);
-      setSelectedDate(null);
+  const user = useSelector((state: any) => state.auth.user);
+  const isLoggedIn = !!user;
+  const userId = user?._id;
 
-      const today = dayjs();
-      const days = Array.from({ length: allowedDays }, (_, i) =>
-        today.add(i, "day").format("YYYY-MM-DD")
-      );
+  // Use subscription-based booking mutation
+  const [bookWithSubscription] = useBookWithSubscriptionMutation();
 
-      // exclude already booked
-      const filtered = days.filter((d) => !bookedDates.includes(d));
+  // Extract available/booked dates
+  const apiAvailableDates = useMemo(() => {
+    return new Set(jetData?.Data?.availableDates || []);
+  }, [jetData]);
 
-      setAvailableDates(filtered);
-      setLoading(false);
+  const bookedDates = useMemo(() => {
+    return new Set(jetData?.Data?.bookedDates || []);
+  }, [jetData]);
+
+  // Calendar setup
+  const [currentViewMonth, setCurrentViewMonth] = useState(dayjs());
+  const startOfMonth = currentViewMonth.startOf("month");
+  const endOfMonth = currentViewMonth.endOf("month");
+  const totalDays = endOfMonth.date();
+  const firstDayIndex = startOfMonth.day();
+
+  const calendarDays = useMemo(() => {
+    const days = [];
+    for (let i = 0; i < firstDayIndex; i++) days.push(null);
+    for (let day = 1; day <= totalDays; day++) {
+      const date = startOfMonth.add(day - 1, "day");
+      const formatted = date.format("YYYY-MM-DD");
+      const isAvailable = apiAvailableDates.has(formatted) && !bookedDates.has(formatted);
+      days.push({ day, dateStr: formatted, available: isAvailable, booked: bookedDates.has(formatted) });
     }
-  }, [open, rentId, bookedDates, allowedDays]);
+    return days;
+  }, [startOfMonth, totalDays, firstDayIndex, apiAvailableDates, bookedDates]);
 
-  const handleSelectDate = (date: string) => {
-    setSelectedDate(date);
+  // Time slots
+  const timeSlots = [
+    "06:00 AM",
+    "07:00 AM",
+    "08:00 AM",
+    "09:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "01:00 PM",
+    "02:00 PM",
+    "03:00 PM",
+    "04:00 PM",
+    "05:00 PM",
+    "06:00 PM",
+  ];
+
+  // ✅ Handle Confirm Booking via Subscription
+  const handleConfirm = async () => {
+    if (!isLoggedIn) return alert("Please log in.");
+    if (!selectedDate) return alert("Please select a date.");
+    if (!subscriptionPurchaseId)
+      return alert("No active subscription found. Please purchase a package.");
+
+    setError(null);
+    setSubmitting(true);
+
+    const payload = {
+      userId,
+      jetSkyId: rentId,
+      subscriptionPurchaseId,
+      bookingDate: selectedDate,
+      bookingTime: selectedTime,
+      drivingLicense: drivingLicense.trim() || undefined,
+    };
+
+    try {
+      const response = await bookWithSubscription(payload).unwrap();
+      console.log("Booking successful:", response.bookingDone);
+      setConfirmed(true);
+    } catch (err: any) {
+      const message =
+        err.data?.message ||
+        err.response?.data?.message ||
+        "Failed to book using subscription.";
+      setError(message);
+      console.error("Booking failed:", err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleConfirm = () => {
-    console.log("Booking confirmed for:", selectedDate);
-    setConfirmed(true);
-  };
+  // Loading
+  if (rentLoading || availabilityLoading) {
+    return (
+      <Modal open={open} footer={null} onCancel={onClose} centered>
+        <div className="flex justify-center p-8">
+          <Spin size="large" />
+        </div>
+      </Modal>
+    );
+  }
+
+  if (!rent || !jetData) {
+    return (
+      <Modal open={open} footer={null} onCancel={onClose}>
+        <div className="p-8 text-center text-red-600">Failed to load jet or availability.</div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal
@@ -91,142 +161,162 @@ const bookedDates = useMemo(
       onCancel={onClose}
       footer={null}
       centered
-      width={720}
-      className="!rounded-2xl !overflow-hidden"
+      width={800}
+      className="!rounded-2xl"
       title={
         <div className="flex items-center gap-3 text-2xl font-bold">
-          {confirmed && <CheckCircle2 className="w-7 h-7 text-green-500" />}
-          {!confirmed && "Select Booking Date"}
+          {confirmed ? (
+            <>
+              <span className="text-green-500">🎉</span> Booking Confirmed!
+            </>
+          ) : (
+            "Select Date & Time"
+          )}
         </div>
       }
     >
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-cyan-50 via-white to-white opacity-70" />
-
-      {loading ? (
-        <div className="flex justify-center items-center h-72 relative z-10">
-          <Spin size="large" />
+      {!isLoggedIn ? (
+        <div className="text-center py-10">
+          <h3 className="text-lg text-red-600 mb-4">🔒 Login Required</h3>
+          <p className="text-gray-600 mb-6">Please log in to make a reservation.</p>
+          <Link href="/login" passHref>
+            <Button type="primary" size="large">
+              Go to Login
+            </Button>
+          </Link>
         </div>
       ) : confirmed ? (
-        <div className="relative z-10">
-          <Result
-            status="success"
-            title="🎉 Booking Successful!"
-            subTitle={`Your ${jetName ?? "Jet Ski"} is reserved for ${dayjs(
-              selectedDate
-            ).format("MMMM DD, YYYY")} (6 AM – 6 PM).`}
-            className="text-center"
-            extra={[
-              <Button
-                type="primary"
-                key="done"
-                onClick={onClose}
-                className="!bg-gradient-to-r !from-cyan-500 !to-blue-500 !rounded-full px-6 py-2 hover:!from-cyan-600 hover:!to-blue-600"
-              >
-                Done
-              </Button>,
-            ]}
-          />
-        </div>
+        <Result
+          status="success"
+          title="✅ Booking Successful!"
+          subTitle={`Your ride is confirmed for ${dayjs(selectedDate).format("MMMM DD, YYYY")} at ${selectedTime}.`}
+          extra={
+            <Button type="primary" onClick={onClose} className="bg-blue-600">
+              Done
+            </Button>
+          }
+        />
       ) : (
-        <div className="relative z-10 space-y-6">
-          {/* Info Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-7 relative z-10">
-            <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-5 text-center shadow-md flex flex-col items-center gap-1">
-              <Sun className="w-8 h-8 text-cyan-500" />
-              <p className="text-lg font-semibold text-cyan-700">12 Hours</p>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Full Day Access
-              </p>
-            </div>
-            <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-5 text-center shadow-md flex flex-col items-center gap-1">
-              <Waves className="w-8 h-8 text-cyan-500" />
-              <p className="text-lg font-semibold text-cyan-700">Unlimited</p>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Water Activities
-              </p>
-            </div>
-            <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-5 text-center shadow-md flex flex-col items-center gap-1">
-              <Users className="w-8 h-8 text-cyan-500" />
-              <p className="text-lg font-semibold text-cyan-700">Up to 2</p>
-              <p className="text-gray-600 text-sm sm:text-base">Passengers</p>
-            </div>
-          </div>
-
+        <div className="space-y-6">
           {/* Jet Info */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-cyan-50 p-4 rounded-md text-cyan-700 font-semibold text-lg sm:text-xl">
-            <span>JetSki: {jetName}</span>
-            <span>Horsepower: {jetHp}</span>
-            <span>Price: {jetPrice}$</span>
+          <div className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white p-4 rounded-xl text-center font-semibold shadow-md">
+            <p>JetSki: {jetName || rent.jetName}</p>
+            <p>Horsepower: {jetHp || rent.jetHp} HP • Price: Free (via Subscription)</p>
           </div>
 
-          {/* Date Header */}
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-cyan-500" />
-            <h2 className="text-cyan-700 font-semibold text-lg sm:text-xl">
-              Bookings Available for the Next {allowedDays} Days
-            </h2>
+          {/* Legend */}
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-gray-700">Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span className="text-gray-700">Booked</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-cyan-500 border-2 border-white rounded-full"></div>
+              <span className="text-gray-700">Selected</span>
+            </div>
           </div>
 
-          {/* Date Selection */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {availableDates.length > 0 ? (
-              availableDates.map((date) => {
-                const formatted = dayjs(date).format("MMM DD");
-                const isSelected = selectedDate === date;
-
-                return (
-                  <motion.div
-                    key={date}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      type={isSelected ? "primary" : "default"}
-                      className={`h-16 w-full !rounded-xl transition-all text-lg font-medium ${
-                        isSelected
-                          ? "!bg-gradient-to-r !from-cyan-500 !to-blue-500 text-white border-none shadow-lg"
-                          : "!border-gray-300 hover:!border-cyan-400 hover:!text-cyan-600"
-                      }`}
-                      onClick={() => handleSelectDate(date)}
-                      block
-                    >
-                      {formatted}
-                    </Button>
-                  </motion.div>
-                );
-              })
-            ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-6 text-gray-500">
-                <CalendarX className="w-10 h-10 mb-2 text-gray-400" />
-                <p>No available dates in the next {allowedDays} days.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* 📅 Calendar */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setCurrentViewMonth(prev => prev.subtract(1, "month"))} className="p-2 hover:bg-gray-100 rounded-full">
+                  <ChevronLeft className="w-5 h-5 text-cyan-500" />
+                </button>
+                <h3 className="text-lg font-medium text-gray-900">{currentViewMonth.format("MMMM YYYY")}</h3>
+                <button onClick={() => setCurrentViewMonth(prev => prev.add(1, "month"))} className="p-2 hover:bg-gray-100 rounded-full">
+                  <ChevronRight className="w-5 h-5 text-cyan-500" />
+                </button>
               </div>
-            )}
+
+              <div className="grid grid-cols-7 gap-1">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="h-10 flex items-center justify-center text-xs text-gray-500">{day}</div>
+                ))}
+                {calendarDays.map((d, idx) =>
+                  d ? (
+                    <button
+                      key={idx}
+                      disabled={!d.available}
+                      onClick={() => d.available && setSelectedDate(d.dateStr)}
+                      className={`
+                        h-10 w-10 flex items-center justify-center text-sm rounded-full
+                        ${selectedDate === d.dateStr ? "bg-cyan-500 text-white" :
+                          d.booked ? "text-red-400 line-through" :
+                          d.available ? "text-gray-900 hover:bg-gray-100" : "text-gray-300"}
+                      `}
+                    >
+                      {d.day}
+                    </button>
+                  ) : <div key={idx} className="h-10" />
+                )}
+              </div>
+            </div>
+
+            {/* Time & License */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Select Time</h3>
+                {selectedDate ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {timeSlots.map((time) => (
+                      <motion.button
+                        key={time}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setSelectedTime(time)}
+                        className={`
+                          w-full py-2 px-4 text-left rounded-lg border capitalize
+                          ${selectedTime === time
+                            ? "border-cyan-500 bg-cyan-50 text-cyan-700"
+                            : "border-gray-200 hover:border-cyan-300"
+                          }
+                        `}
+                      >
+                        {time}
+                      </motion.button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">Select a date to choose time.</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Driving License (Optional)
+                </label>
+                <textarea
+                  value={drivingLicense}
+                  onChange={(e) => setDrivingLicense(e.target.value)}
+                  placeholder="License number or ID"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-cyan-200"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Confirm Section */}
+          {error && <Alert type="error" message="Error" description={error} showIcon closable onClose={() => setError(null)} />}
+
           {selectedDate && (
-            <motion.div
-              className="mt-8 p-5 bg-cyan-50 border border-cyan-200 rounded-2xl shadow-md text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <p className="mb-3 text-lg font-medium">
-                You selected:{" "}
-                <span className="text-cyan-600 font-semibold">
-                  {dayjs(selectedDate).format("MMMM DD, YYYY")}
-                </span>
-              </p>
-              <p className="mb-4 text-sm text-gray-600">
-                Your booking covers the whole day: 6:00 AM – 6:00 PM
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-center">
+              <p className="text-gray-700 mb-4">
+                Confirm booking on <strong>{dayjs(selectedDate).format("MMMM DD")}</strong> at <strong>{selectedTime}</strong>
               </p>
               <Button
                 type="primary"
                 size="large"
-                className="!bg-gradient-to-r !from-cyan-500 !to-blue-500 !rounded-full px-12 py-4 text-lg hover:!from-cyan-600 hover:!to-blue-600 shadow-lg"
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 px-12 py-3 rounded-full hover:from-cyan-600 hover:to-blue-700"
                 onClick={handleConfirm}
+                loading={submitting}
+                disabled={submitting}
               >
-                Confirm Booking
+                Confirm with Subscription
               </Button>
             </motion.div>
           )}

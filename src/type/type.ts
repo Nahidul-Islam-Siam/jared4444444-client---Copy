@@ -272,6 +272,9 @@ export interface Rent {
   createdAt: string;
   updatedAt: string;
   bookingDate?: [];
+ jetName?: string
+ jetHp?: number
+ jetPrice?: number
 }
 
 /* ------------------------ Request payload types ------------------------- */

@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
+import { Swiper, SwiperSlide } from "swiper/react"; 
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 
 // Import Swiper styles
 import "swiper/css";
-import "swiper/css/navigation";
+import "swiper/css/navigation"; 
 import "swiper/css/pagination";
 
 // Import components
@@ -18,9 +18,16 @@ import { useGetAllRentsQuery } from "@/redux/api/rent/rentApi";
 
 // Import your RTK Query hook
 
-const FromSunriseToSunsetSection = () => {
+const FromSunriseToSunsetSection = (
+
+
+) => {
   const swiperRef = useRef<SwiperType | null>(null);
   const { data: allTheRents, isLoading, isError } = useGetAllRentsQuery();
+
+
+  console.log(allTheRents, "rentsday");
+  
   const rents = allTheRents?.Data || [];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,6 +126,8 @@ const FromSunriseToSunsetSection = () => {
           jetName={selectedRent.jet_skyId?.name}
           jetHp={selectedRent.jet_skyId?.hp}
           jetPrice={selectedRent.jet_skyId?.price}
+          model={selectedRent.model}
+            subscriptionPurchaseId={selectedRent.subscriptionPurchaseId}
         />
       )}
     </section>
