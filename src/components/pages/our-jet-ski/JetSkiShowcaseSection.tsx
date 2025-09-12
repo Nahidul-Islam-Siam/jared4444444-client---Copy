@@ -18,6 +18,8 @@ export default function JetSkiShowcaseSection() {
 
   const jetSkis = data?.Data || [];
 
+  console.log("all our jetSkis", jetSkis);
+
   if (isLoading) {
     return (
       <section className="py-12 lg:py-16 bg-gray-50">

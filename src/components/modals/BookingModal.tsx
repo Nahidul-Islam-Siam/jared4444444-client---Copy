@@ -32,7 +32,6 @@ export default function BookingModal({
   jetHp,
   jetPrice,
   model,
-  subscriptionPurchaseId, 
 }: BookingModalProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState("08:00 AM");
@@ -50,6 +49,8 @@ export default function BookingModal({
       { model: model || "" },
       { skip: !open || !model }
     );
+
+
 
   const user = useSelector((state: any) => state.auth.user);
   const isLoggedIn = !!user;
@@ -116,25 +117,6 @@ export default function BookingModal({
     today,
   ]);
 
-  // const calendarDays = useMemo(() => {
-  //   const days = [];
-  //   for (let i = 0; i < firstDayIndex; i++) days.push(null);
-  //   for (let day = 1; day <= totalDays; day++) {
-  //     const date = startOfMonth.add(day - 1, "day");
-  //     const formatted = date.format("YYYY-MM-DD");
-  //     const isAvailable =
-  //       apiAvailableDates.has(formatted) && !bookedDates.has(formatted);
-  //     days.push({
-  //       day,
-  //       dateStr: formatted,
-  //       available: isAvailable,
-  //       booked: bookedDates.has(formatted),
-  //     });
-  //   }
-  //   return days;
-  // }, [startOfMonth, totalDays, firstDayIndex, apiAvailableDates, bookedDates]);
-
-  // Time slots
   const timeSlots = [
     "06:00 AM",
     "07:00 AM",
@@ -163,8 +145,7 @@ export default function BookingModal({
       toast.error("Cannot book on a past date.");
       return;
     }
-    // if (!subscriptionPurchaseId)
-    //   return alert("No active subscription found. Please purchase a package.");
+
 
     setError(null);
     setSubmitting(true);
@@ -174,6 +155,7 @@ export default function BookingModal({
       rentpackId: rentId,
       model,
       bookingDate: selectedDate,
+      price:jetPrice,
       bookingTime: selectedTime,
       drivingLicense: drivingLicense.trim() || undefined,
     };
@@ -186,11 +168,13 @@ export default function BookingModal({
       console.log(response);
 
       if (response.success) {
-        if(response.sessionUrl) {
-          window.location.href = response.sessionUrl
+        if (response.sessionUrl) {
+          window.location.href = response.sessionUrl;
         }
         toast.success(response.message || "Booking successful!");
         setConfirmed(true);
+        onClose();
+        setConfirmed(false);
       } else {
         toast.error(response.message || "Booking failed!");
       }
@@ -202,6 +186,7 @@ export default function BookingModal({
         "Failed to book using subscription.";
       setError(message);
       toast.error(message);
+      console.log(err);
     } finally {
       setSubmitting(false);
     }
