@@ -11,7 +11,7 @@ import { useSelector } from "react-redux";
 import Link from "next/link";
 import { useGetAllAvailableDatesQuery } from "@/redux/api/availableDate/availableDateApi";
 import { useBookWithSubscriptionMutation } from "@/redux/api/bookings/bookApi";
-
+import { toast } from "sonner";
 
 interface BookingModalProps {
   open: boolean;
@@ -41,13 +41,15 @@ export default function BookingModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {  data:rentData, isLoading: rentLoading } = useGetRentByIdQuery(rentId);
+  const { data: rentData, isLoading: rentLoading } =
+    useGetRentByIdQuery(rentId);
   const rent = rentData?.Data?.[0];
 
-  const { data: jetData, isLoading: availabilityLoading } = useGetAllAvailableDatesQuery(
-    { model: model || "" },
-    { skip: !open || !model }
-  );
+  const { data: jetData, isLoading: availabilityLoading } =
+    useGetAllAvailableDatesQuery(
+      { model: model || "" },
+      { skip: !open || !model }
+    );
 
   const user = useSelector((state: any) => state.auth.user);
   const isLoggedIn = !!user;
@@ -65,6 +67,8 @@ export default function BookingModal({
     return new Set(jetData?.Data?.bookedDates || []);
   }, [jetData]);
 
+  const today = dayjs().startOf("day"); // Normalize to start of the day for comparison
+
   // Calendar setup
   const [currentViewMonth, setCurrentViewMonth] = useState(dayjs());
   const startOfMonth = currentViewMonth.startOf("month");
@@ -73,16 +77,53 @@ export default function BookingModal({
   const firstDayIndex = startOfMonth.day();
 
   const calendarDays = useMemo(() => {
-    const days = [];
-    for (let i = 0; i < firstDayIndex; i++) days.push(null);
-    for (let day = 1; day <= totalDays; day++) {
-      const date = startOfMonth.add(day - 1, "day");
-      const formatted = date.format("YYYY-MM-DD");
-      const isAvailable = apiAvailableDates.has(formatted) && !bookedDates.has(formatted);
-      days.push({ day, dateStr: formatted, available: isAvailable, booked: bookedDates.has(formatted) });
-    }
-    return days;
-  }, [startOfMonth, totalDays, firstDayIndex, apiAvailableDates, bookedDates]);
+  const days = [];
+  for (let i = 0; i < firstDayIndex; i++) days.push(null);
+
+  for (let day = 1; day <= totalDays; day++) {
+    const date = startOfMonth.add(day - 1, "day");
+    const formatted = date.format("YYYY-MM-DD");
+
+    // Check if the date is in the past
+    const isPast = date.isBefore(today, "day"); // 'day' ensures full-day precision
+
+    // A date is available only if:
+    // - It's not in the past
+    // - It exists in apiAvailableDates
+    // - And NOT in bookedDates
+    const isAvailable =
+      !isPast && apiAvailableDates.has(formatted) && !bookedDates.has(formatted);
+
+    const isBooked = bookedDates.has(formatted);
+
+    days.push({
+      day,
+      dateStr: formatted,
+      available: isAvailable,
+      booked: isBooked,
+      past: isPast,
+    });
+  }
+  return days;
+}, [startOfMonth, totalDays, firstDayIndex, apiAvailableDates, bookedDates, today]);
+
+  // const calendarDays = useMemo(() => {
+  //   const days = [];
+  //   for (let i = 0; i < firstDayIndex; i++) days.push(null);
+  //   for (let day = 1; day <= totalDays; day++) {
+  //     const date = startOfMonth.add(day - 1, "day");
+  //     const formatted = date.format("YYYY-MM-DD");
+  //     const isAvailable =
+  //       apiAvailableDates.has(formatted) && !bookedDates.has(formatted);
+  //     days.push({
+  //       day,
+  //       dateStr: formatted,
+  //       available: isAvailable,
+  //       booked: bookedDates.has(formatted),
+  //     });
+  //   }
+  //   return days;
+  // }, [startOfMonth, totalDays, firstDayIndex, apiAvailableDates, bookedDates]);
 
   // Time slots
   const timeSlots = [
@@ -103,34 +144,58 @@ export default function BookingModal({
 
   // ✅ Handle Confirm Booking via Subscription
   const handleConfirm = async () => {
-    if (!isLoggedIn) return alert("Please log in.");
-    if (!selectedDate) return alert("Please select a date.");
-    if (!subscriptionPurchaseId)
-      return alert("No active subscription found. Please purchase a package.");
+if (!isLoggedIn) return alert("Please log in.");
+  if (!selectedDate) return alert("Please select a date.");
+
+  const selected = dayjs(selectedDate);
+  const now = dayjs().startOf("day");
+
+  if (selected.isBefore(now, "day")) {
+    toast.error("Cannot book on a past date.");
+    return;
+  }
+    // if (!subscriptionPurchaseId)
+    //   return alert("No active subscription found. Please purchase a package.");
 
     setError(null);
     setSubmitting(true);
 
     const payload = {
       userId,
-      jetSkyId: rentId,
-      subscriptionPurchaseId,
+      rentpackId: rentId,
+      model,
       bookingDate: selectedDate,
       bookingTime: selectedTime,
       drivingLicense: drivingLicense.trim() || undefined,
     };
 
+
+
+    // return;
+
     try {
       const response = await bookWithSubscription(payload).unwrap();
-      console.log("Booking successful:", response.bookingDone);
-      setConfirmed(true);
+
+      console.log(response);
+      
+
+      if(response.success){
+// if()
+
+         toast.success(response.message || 'Booking successful!')
+               setConfirmed(true);
+      }else{
+        toast.error(response.message || 'Booking failed!')
+      }
+      // console.log("Booking successful:", response.bookingDone);
+
     } catch (err: any) {
       const message =
         err.data?.message ||
         err.response?.data?.message ||
         "Failed to book using subscription.";
       setError(message);
-      console.error("Booking failed:", err);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -150,7 +215,9 @@ export default function BookingModal({
   if (!rent || !jetData) {
     return (
       <Modal open={open} footer={null} onCancel={onClose}>
-        <div className="p-8 text-center text-red-600">Failed to load jet or availability.</div>
+        <div className="p-8 text-center text-red-600">
+          Failed to load jet or availability.
+        </div>
       </Modal>
     );
   }
@@ -178,8 +245,10 @@ export default function BookingModal({
       {!isLoggedIn ? (
         <div className="text-center py-10">
           <h3 className="text-lg text-red-600 mb-4">🔒 Login Required</h3>
-          <p className="text-gray-600 mb-6">Please log in to make a reservation.</p>
-          <Link href="/login" passHref>
+          <p className="text-gray-600 mb-6">
+            Please log in to make a reservation.
+          </p>
+          <Link href="/auth/login" passHref>
             <Button type="primary" size="large">
               Go to Login
             </Button>
@@ -189,7 +258,9 @@ export default function BookingModal({
         <Result
           status="success"
           title="✅ Booking Successful!"
-          subTitle={`Your ride is confirmed for ${dayjs(selectedDate).format("MMMM DD, YYYY")} at ${selectedTime}.`}
+          subTitle={`Your ride is confirmed for ${dayjs(selectedDate).format(
+            "MMMM DD, YYYY"
+          )} at ${selectedTime}.`}
           extra={
             <Button type="primary" onClick={onClose} className="bg-blue-600">
               Done
@@ -201,7 +272,10 @@ export default function BookingModal({
           {/* Jet Info */}
           <div className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white p-4 rounded-xl text-center font-semibold shadow-md">
             <p>JetSki: {jetName || rent.jetName}</p>
-            <p>Horsepower: {jetHp || rent.jetHp} HP • Price: Free (via Subscription)</p>
+            <p>
+              Horsepower: {jetHp || rent.jetHp} HP • Price: Free (via
+              Subscription)
+            </p>
           </div>
 
           {/* Legend */}
@@ -224,20 +298,67 @@ export default function BookingModal({
             {/* 📅 Calendar */}
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
-                <button onClick={() => setCurrentViewMonth(prev => prev.subtract(1, "month"))} className="p-2 hover:bg-gray-100 rounded-full">
+                <button
+                  onClick={() =>
+                    setCurrentViewMonth((prev) => prev.subtract(1, "month"))
+                  }
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
                   <ChevronLeft className="w-5 h-5 text-cyan-500" />
                 </button>
-                <h3 className="text-lg font-medium text-gray-900">{currentViewMonth.format("MMMM YYYY")}</h3>
-                <button onClick={() => setCurrentViewMonth(prev => prev.add(1, "month"))} className="p-2 hover:bg-gray-100 rounded-full">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {currentViewMonth.format("MMMM YYYY")}
+                </h3>
+                <button
+                  onClick={() =>
+                    setCurrentViewMonth((prev) => prev.add(1, "month"))
+                  }
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
                   <ChevronRight className="w-5 h-5 text-cyan-500" />
                 </button>
               </div>
 
               <div className="grid grid-cols-7 gap-1">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <div key={day} className="h-10 flex items-center justify-center text-xs text-gray-500">{day}</div>
-                ))}
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                  (day) => (
+                    <div
+                      key={day}
+                      className="h-10 flex items-center justify-center text-xs text-gray-500"
+                    >
+                      {day}
+                    </div>
+                  )
+                )}
+
                 {calendarDays.map((d, idx) =>
+  d ? (
+    <button
+      key={idx}
+      disabled={!d.available}
+      onClick={() => d.available && setSelectedDate(d.dateStr)}
+      className={`
+        h-10 w-10 flex items-center justify-center text-sm rounded-full
+        ${
+          selectedDate === d.dateStr
+            ? "bg-cyan-500 text-white"
+            : d.past
+            ? "text-gray-300 cursor-not-allowed"
+            : d.booked
+            ? "text-red-400 line-through"
+            : d.available
+            ? "text-gray-900 hover:bg-gray-100"
+            : "text-gray-300"
+        }
+      `}
+    >
+      {d.day}
+    </button>
+  ) : (
+    <div key={idx} className="h-10" />
+  )
+)}
+                {/* {calendarDays.map((d, idx) =>
                   d ? (
                     <button
                       key={idx}
@@ -245,22 +366,32 @@ export default function BookingModal({
                       onClick={() => d.available && setSelectedDate(d.dateStr)}
                       className={`
                         h-10 w-10 flex items-center justify-center text-sm rounded-full
-                        ${selectedDate === d.dateStr ? "bg-cyan-500 text-white" :
-                          d.booked ? "text-red-400 line-through" :
-                          d.available ? "text-gray-900 hover:bg-gray-100" : "text-gray-300"}
+                        ${
+                          selectedDate === d.dateStr
+                            ? "bg-cyan-500 text-white"
+                            : d.booked
+                            ? "text-red-400 line-through"
+                            : d.available
+                            ? "text-gray-900 hover:bg-gray-100"
+                            : "text-gray-300"
+                        }
                       `}
                     >
                       {d.day}
                     </button>
-                  ) : <div key={idx} className="h-10" />
-                )}
+                  ) : (
+                    <div key={idx} className="h-10" />
+                  )
+                )} */}
               </div>
             </div>
 
             {/* Time & License */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Select Time</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">
+                  Select Time
+                </h3>
                 {selectedDate ? (
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {timeSlots.map((time) => (
@@ -271,9 +402,10 @@ export default function BookingModal({
                         onClick={() => setSelectedTime(time)}
                         className={`
                           w-full py-2 px-4 text-left rounded-lg border capitalize
-                          ${selectedTime === time
-                            ? "border-cyan-500 bg-cyan-50 text-cyan-700"
-                            : "border-gray-200 hover:border-cyan-300"
+                          ${
+                            selectedTime === time
+                              ? "border-cyan-500 bg-cyan-50 text-cyan-700"
+                              : "border-gray-200 hover:border-cyan-300"
                           }
                         `}
                       >
@@ -282,7 +414,9 @@ export default function BookingModal({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">Select a date to choose time.</p>
+                  <p className="text-gray-500 text-sm">
+                    Select a date to choose time.
+                  </p>
                 )}
               </div>
 
@@ -301,12 +435,27 @@ export default function BookingModal({
             </div>
           </div>
 
-          {error && <Alert type="error" message="Error" description={error} showIcon closable onClose={() => setError(null)} />}
+          {error && (
+            <Alert
+              type="error"
+              message="Error"
+              description={error}
+              showIcon
+              closable
+              onClose={() => setError(null)}
+            />
+          )}
 
           {selectedDate && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 text-center"
+            >
               <p className="text-gray-700 mb-4">
-                Confirm booking on <strong>{dayjs(selectedDate).format("MMMM DD")}</strong> at <strong>{selectedTime}</strong>
+                Confirm booking on{" "}
+                <strong>{dayjs(selectedDate).format("MMMM DD")}</strong> at{" "}
+                <strong>{selectedTime}</strong>
               </p>
               <Button
                 type="primary"

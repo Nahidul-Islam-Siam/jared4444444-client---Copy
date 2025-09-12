@@ -3,11 +3,12 @@ import { baseApi } from "../baseApi";
 
 export interface BookingFromSubscriptionPayload {
   userId: string;
-  jetSkyId: string;           // rentId
-  subscriptionPurchaseId: string; // user's active pack ID
-  bookingDate: string;        // "2025-09-16"
-  bookingTime?: string;       // "08:00 AM"
+  rentpackId: string;     
+  subscriptionPurchaseId?: string; 
+  bookingDate: string;        
+  bookingTime?: string;       
   drivingLicense?: string;
+  adventurePackId?: string
 }
 
 export interface BookingFromSubscriptionResponse {
