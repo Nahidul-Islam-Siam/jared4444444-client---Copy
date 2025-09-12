@@ -12,7 +12,6 @@ import {
 } from 'antd';
 import { TJetSki } from '@/type/type';
 import { TAdventurePackPayload } from '@/redux/api/adventurePack/adventurePackApi';
-import { useCreatePackageMutation } from '@/redux/api/createPakage/createpackageApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store/store';
 
@@ -40,7 +39,6 @@ export default function AdventurePackForm({
 
   console.log(userId, "user id");
   
-const [createPackage] = useCreatePackageMutation()
 
 
   /* ---- init: set selected jet ski if editing ---- */

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 import UserCard from "@/components/cards/UserCard";
-import ActivePlan from "@/components/pages/user profile/ActivePlan";
 import { Container } from "@/components/shared/Container/Container";
 import { Button, Card, Form, Input, Typography, Spin, Alert } from "antd";
 import { toast } from "sonner";
@@ -17,7 +16,6 @@ import {
 import { useGetBookingByIdQuery } from "@/redux/api/bookings/bookings";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/services/user/authSlice";
-import ActivePlanPage from "./activePlan/activePlan";
 import ActiveAdventurePlanPage from "./activePlan/activePlan";
 import ActiveSubscribePage from "./activePlan/activeSubscribtion";
 

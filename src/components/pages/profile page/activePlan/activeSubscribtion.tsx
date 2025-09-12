@@ -66,7 +66,7 @@ export default function ActiveSubscribePage() {
           <div className="space-y-6">
             {subscriptionData.map((adventure: any) => {
               const pack = adventure.adventurePackId;
-              const jetSkyModel = adventure.model || pack?.model || "Unknown Model";
+              // const jetSkyModel = adventure.model || pack?.model || "Unknown Model";
               const startDate = new Date(adventure.startDate).toLocaleDateString();
               const expiryDate = new Date(adventure.expiryDate).toLocaleDateString();
 

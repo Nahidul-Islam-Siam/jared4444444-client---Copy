@@ -52,7 +52,7 @@ export default function RidesSelectionModal({
 
   const handleRideSelection = async (rides: number, price: number) => {
     if (!userId || !packId) {
-      alert("User or Pack not found. Please try again.");
+      toast.error("You are not Authenticated.");
       return;
     }
 

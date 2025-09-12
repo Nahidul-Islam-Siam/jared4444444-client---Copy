@@ -3,7 +3,6 @@ import ForgotPasswordForm from '@/components/pages/auth/ForgotPasswordForm';
 import Image from 'next/image';
 import { Metadata } from 'next';
 import Link from "next/link";
-import { useForgotPasswordMutation } from "@/redux/api/auth/authApi";
 
 export const metadata: Metadata = {
     title: 'Forgot Password | JetXClub',
