@@ -32,7 +32,7 @@ export default function BookingModal({
   jetHp,
   jetPrice,
   model,
-  subscriptionPurchaseId, // Comes from user's active subscription
+  subscriptionPurchaseId, 
 }: BookingModalProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState("08:00 AM");
@@ -77,35 +77,44 @@ export default function BookingModal({
   const firstDayIndex = startOfMonth.day();
 
   const calendarDays = useMemo(() => {
-  const days = [];
-  for (let i = 0; i < firstDayIndex; i++) days.push(null);
+    const days = [];
+    for (let i = 0; i < firstDayIndex; i++) days.push(null);
 
-  for (let day = 1; day <= totalDays; day++) {
-    const date = startOfMonth.add(day - 1, "day");
-    const formatted = date.format("YYYY-MM-DD");
+    for (let day = 1; day <= totalDays; day++) {
+      const date = startOfMonth.add(day - 1, "day");
+      const formatted = date.format("YYYY-MM-DD");
 
-    // Check if the date is in the past
-    const isPast = date.isBefore(today, "day"); // 'day' ensures full-day precision
+      // Check if the date is in the past
+      const isPast = date.isBefore(today, "day"); // 'day' ensures full-day precision
 
-    // A date is available only if:
-    // - It's not in the past
-    // - It exists in apiAvailableDates
-    // - And NOT in bookedDates
-    const isAvailable =
-      !isPast && apiAvailableDates.has(formatted) && !bookedDates.has(formatted);
+      // A date is available only if:
+      // - It's not in the past
+      // - It exists in apiAvailableDates
+      // - And NOT in bookedDates
+      const isAvailable =
+        !isPast &&
+        apiAvailableDates.has(formatted) &&
+        !bookedDates.has(formatted);
 
-    const isBooked = bookedDates.has(formatted);
+      const isBooked = bookedDates.has(formatted);
 
-    days.push({
-      day,
-      dateStr: formatted,
-      available: isAvailable,
-      booked: isBooked,
-      past: isPast,
-    });
-  }
-  return days;
-}, [startOfMonth, totalDays, firstDayIndex, apiAvailableDates, bookedDates, today]);
+      days.push({
+        day,
+        dateStr: formatted,
+        available: isAvailable,
+        booked: isBooked,
+        past: isPast,
+      });
+    }
+    return days;
+  }, [
+    startOfMonth,
+    totalDays,
+    firstDayIndex,
+    apiAvailableDates,
+    bookedDates,
+    today,
+  ]);
 
   // const calendarDays = useMemo(() => {
   //   const days = [];
@@ -144,16 +153,16 @@ export default function BookingModal({
 
   // ✅ Handle Confirm Booking via Subscription
   const handleConfirm = async () => {
-if (!isLoggedIn) return alert("Please log in.");
-  if (!selectedDate) return alert("Please select a date.");
+    if (!isLoggedIn) return alert("Please log in.");
+    if (!selectedDate) return alert("Please select a date.");
 
-  const selected = dayjs(selectedDate);
-  const now = dayjs().startOf("day");
+    const selected = dayjs(selectedDate);
+    const now = dayjs().startOf("day");
 
-  if (selected.isBefore(now, "day")) {
-    toast.error("Cannot book on a past date.");
-    return;
-  }
+    if (selected.isBefore(now, "day")) {
+      toast.error("Cannot book on a past date.");
+      return;
+    }
     // if (!subscriptionPurchaseId)
     //   return alert("No active subscription found. Please purchase a package.");
 
@@ -169,26 +178,23 @@ if (!isLoggedIn) return alert("Please log in.");
       drivingLicense: drivingLicense.trim() || undefined,
     };
 
-
-
     // return;
 
     try {
       const response = await bookWithSubscription(payload).unwrap();
 
       console.log(response);
-      
 
-      if(response.success){
-// if()
-
-         toast.success(response.message || 'Booking successful!')
-               setConfirmed(true);
-      }else{
-        toast.error(response.message || 'Booking failed!')
+      if (response.success) {
+        if(response.sessionUrl) {
+          window.location.href = response.sessionUrl
+        }
+        toast.success(response.message || "Booking successful!");
+        setConfirmed(true);
+      } else {
+        toast.error(response.message || "Booking failed!");
       }
       // console.log("Booking successful:", response.bookingDone);
-
     } catch (err: any) {
       const message =
         err.data?.message ||
@@ -332,12 +338,12 @@ if (!isLoggedIn) return alert("Please log in.");
                 )}
 
                 {calendarDays.map((d, idx) =>
-  d ? (
-    <button
-      key={idx}
-      disabled={!d.available}
-      onClick={() => d.available && setSelectedDate(d.dateStr)}
-      className={`
+                  d ? (
+                    <button
+                      key={idx}
+                      disabled={!d.available}
+                      onClick={() => d.available && setSelectedDate(d.dateStr)}
+                      className={`
         h-10 w-10 flex items-center justify-center text-sm rounded-full
         ${
           selectedDate === d.dateStr
@@ -351,13 +357,13 @@ if (!isLoggedIn) return alert("Please log in.");
             : "text-gray-300"
         }
       `}
-    >
-      {d.day}
-    </button>
-  ) : (
-    <div key={idx} className="h-10" />
-  )
-)}
+                    >
+                      {d.day}
+                    </button>
+                  ) : (
+                    <div key={idx} className="h-10" />
+                  )
+                )}
                 {/* {calendarDays.map((d, idx) =>
                   d ? (
                     <button

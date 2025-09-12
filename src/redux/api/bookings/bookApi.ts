@@ -9,11 +9,13 @@ export interface BookingFromSubscriptionPayload {
   bookingTime?: string;       
   drivingLicense?: string;
   adventurePackId?: string
+  sessionUrl?: string
 }
 
 export interface BookingFromSubscriptionResponse {
   success: boolean;
   message: string;
+  sessionUrl: string;
   bookingDone: {
     _id: string;
     userId: string;
