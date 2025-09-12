@@ -190,7 +190,8 @@ export const {
     useChangePasswordMutation, // ✅ Export the new hook
     useDeleteUserMutation,
     useLogoutMutation,
-    useForgotPasswordMutation
+    useForgotPasswordMutation,
+    useVerifyOtpMutation
 } = authApi;
 
 // Export the interface for use in components
