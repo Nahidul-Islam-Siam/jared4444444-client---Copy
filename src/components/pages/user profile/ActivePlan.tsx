@@ -21,6 +21,7 @@ interface Plan {
   endDate?: string | Date | null;
   ridesCompleted?: number;
   ridesLeft?: number;
+  
 }
 
 

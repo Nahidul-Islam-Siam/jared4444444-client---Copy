@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useGetAllAdventurePackPurchaseQuery } from "@/redux/api/adventurePackPurchase/adventurePackPurchase";
+import { Spin } from "antd";
 
 interface ActivePlanPageProps {
   userId: string;
@@ -23,7 +24,7 @@ export default function ActivePlanPage({ userId }: ActivePlanPageProps) {
       <div className="bg-background">
         <div className="max-w-7xl mx-auto p-6">
           <h1 className="text-3xl font-bold">Active Plan</h1>
-          <p>Loading your plans...</p>
+    <Spin size="large" />
         </div>
       </div>
     );
