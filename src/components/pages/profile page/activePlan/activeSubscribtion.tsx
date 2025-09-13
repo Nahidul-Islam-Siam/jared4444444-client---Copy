@@ -1,29 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useGetAllSubscriptionPurchasesQuery } from "@/redux/api/subscription/subscriptionApi";
-import { selectCurrentUser } from "@/redux/services/user/authSlice";
-import { useSelector } from "react-redux";
 
-export default function ActiveSubscribePage() {
-  const currentUser = useSelector(selectCurrentUser);
-  const userId = currentUser?._id;
+interface ActiveSubscribePageProps {
+  userId: string;
+}
 
-  const { data: purchaseSubscripotion, isLoading, isError } =
-    useGetAllSubscriptionPurchasesQuery();
+export default function ActiveSubscribePage({
+  userId,
+}: ActiveSubscribePageProps) {
+  const {
+    data: purchaseSubscripotion,
+    isLoading,
+    isError,
+  } = useGetAllSubscriptionPurchasesQuery();
 
+  const subscriptionData =
+    purchaseSubscripotion?.Data?.filter(
+      (sub: any) => sub.userId?._id === userId && sub.status === "active"
+    ) || [];
 
+  console.log(subscriptionData);
 
-
-
-
-  // Filter adventures for current user and only 'active' ones
-  const subscriptionData = purchaseSubscripotion?.Data?.filter(
-    (ad: any) =>
-      ad.userId?._id === userId && ad.status === "active"
-  ) || [];
-
-  console.log(subscriptionData)
-
-  
   if (isLoading) {
     return (
       <div className="bg-background">
@@ -51,7 +48,9 @@ export default function ActiveSubscribePage() {
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Active Subscription Plans</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Active Subscription Plans
+          </h1>
           <p className="text-muted-foreground mt-2">
             Below are your currently active Subscription packs.
           </p>
@@ -60,15 +59,21 @@ export default function ActiveSubscribePage() {
         {/* List of Active Adventure Packs */}
         {subscriptionData.length === 0 ? (
           <div className="bg-white border border-gray-200 p-6 rounded-[15px] shadow-md text-center">
-            <p className="text-card-foreground">No active adventure packs found.</p>
+            <p className="text-card-foreground">
+              No active adventure packs found.
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
             {subscriptionData.map((adventure: any) => {
               const pack = adventure.adventurePackId;
               // const jetSkyModel = adventure.model || pack?.model || "Unknown Model";
-              const startDate = new Date(adventure.startDate).toLocaleDateString();
-              const expiryDate = new Date(adventure.expiryDate).toLocaleDateString();
+              const startDate = new Date(
+                adventure.startDate
+              ).toLocaleDateString();
+              const expiryDate = new Date(
+                adventure.expiryDate
+              ).toLocaleDateString();
 
               return (
                 <div
@@ -92,7 +97,9 @@ export default function ActiveSubscribePage() {
                       <h3 className="text-sm font-medium text-muted-foreground">
                         Start Date
                       </h3>
-                      <p className="text-sm text-card-foreground">{startDate}</p>
+                      <p className="text-sm text-card-foreground">
+                        {startDate}
+                      </p>
                     </div>
 
                     {/* Expiry Date */}
@@ -100,7 +107,9 @@ export default function ActiveSubscribePage() {
                       <h3 className="text-sm font-medium text-muted-foreground">
                         Expiry Date
                       </h3>
-                      <p className="text-sm text-card-foreground">{expiryDate}</p>
+                      <p className="text-sm text-card-foreground">
+                        {expiryDate}
+                      </p>
                     </div>
 
                     {/* Rides Completed */}
@@ -128,9 +137,6 @@ export default function ActiveSubscribePage() {
             })}
           </div>
         )}
-
-      
-      
       </div>
     </div>
   );

@@ -1,20 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useGetAllAdventurePackPurchaseQuery } from "@/redux/api/adventurePackPurchase/adventurePackPurchase";
-import { selectCurrentUser } from "@/redux/services/user/authSlice";
-import { useSelector } from "react-redux";
 
-export default function ActivePlanPage() {
-  const currentUser = useSelector(selectCurrentUser);
-  const userId = currentUser?._id;
+interface ActivePlanPageProps {
+  userId: string;
+}
 
-  const { data: purchaseAdventures, isLoading, isError } =
-    useGetAllAdventurePackPurchaseQuery();
+export default function ActivePlanPage({ userId }: ActivePlanPageProps) {
+  const {
+    data: purchaseAdventures,
+    isLoading,
+    isError,
+  } = useGetAllAdventurePackPurchaseQuery();
 
-  // Filter adventures for current user and only 'active' ones
-  const activeAdventures = purchaseAdventures?.Data?.filter(
-    (ad: any) =>
-      ad.userId?._id === userId && ad.status === "active"
-  ) || [];
+  // Filter adventures for the given user and only 'active' ones
+  const activeAdventures =
+    purchaseAdventures?.Data?.filter(
+      (ad: any) => ad.userId?._id === userId && ad.status === "active"
+    ) || [];
 
   if (isLoading) {
     return (
@@ -43,7 +45,9 @@ export default function ActivePlanPage() {
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Active Adventure Plans</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Active Adventure Plans
+          </h1>
           <p className="text-muted-foreground mt-2">
             Below are your currently active adventure packs.
           </p>
@@ -52,19 +56,26 @@ export default function ActivePlanPage() {
         {/* List of Active Adventure Packs */}
         {activeAdventures.length === 0 ? (
           <div className="bg-white border border-gray-200 p-6 rounded-[15px] shadow-md text-center">
-            <p className="text-card-foreground">No active adventure packs found.</p>
+            <p className="text-card-foreground">
+              No active adventure packs found.
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
             {activeAdventures.map((adventure: any) => {
-              const pack = adventure.adventurePackId;
-              const jetSkyModel = adventure.model || pack?.model || "Unknown Model";
-              const startDate = new Date(adventure.startDate).toLocaleDateString();
-              const expiryDate = new Date(adventure.expiryDate).toLocaleDateString();
+              const pack = adventure?.adventurePackId;
+              const jetSkyModel =
+                adventure?.model || pack?.model || "Unknown Model";
+              const startDate = new Date(
+                adventure?.startDate
+              ).toLocaleDateString();
+              const expiryDate = new Date(
+                adventure?.expiryDate
+              ).toLocaleDateString();
 
               return (
                 <div
-                  key={adventure._id}
+                  key={adventure?._id}
                   className="bg-white border border-white p-6 rounded-[15px] shadow-md"
                 >
                   <div className="grid grid-cols-5 gap-6">
@@ -84,7 +95,9 @@ export default function ActivePlanPage() {
                       <h3 className="text-sm font-medium text-muted-foreground">
                         Start Date
                       </h3>
-                      <p className="text-sm text-card-foreground">{startDate}</p>
+                      <p className="text-sm text-card-foreground">
+                        {startDate}
+                      </p>
                     </div>
 
                     {/* Expiry Date */}
@@ -92,7 +105,9 @@ export default function ActivePlanPage() {
                       <h3 className="text-sm font-medium text-muted-foreground">
                         Expiry Date
                       </h3>
-                      <p className="text-sm text-card-foreground">{expiryDate}</p>
+                      <p className="text-sm text-card-foreground">
+                        {expiryDate}
+                      </p>
                     </div>
 
                     {/* Rides Completed */}
@@ -101,7 +116,7 @@ export default function ActivePlanPage() {
                         Rides Used
                       </h3>
                       <p className="text-sm font-semibold text-primary">
-                        {adventure.ridesNumber - adventure.remainingCredits}
+                        {adventure?.ridesNumber - adventure?.remainingCredits}
                       </p>
                     </div>
 
@@ -111,7 +126,7 @@ export default function ActivePlanPage() {
                         Rides Remaining
                       </h3>
                       <p className="text-sm font-semibold text-accent">
-                        {adventure.remainingCredits}
+                        {adventure?.remainingCredits}
                       </p>
                     </div>
                   </div>
@@ -120,9 +135,6 @@ export default function ActivePlanPage() {
             })}
           </div>
         )}
-
-      
-      
       </div>
     </div>
   );

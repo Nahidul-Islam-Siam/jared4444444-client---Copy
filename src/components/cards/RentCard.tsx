@@ -33,13 +33,6 @@ export default function RentCard({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const features: string[] = (rent as any).feature_list ?? [];
 
-  const getBrand = (name: string) => {
-    if (name.includes("Sea-Doo")) return "SEADOO";
-    if (name.includes("Yamaha")) return "YAMAHA";
-    if (name.includes("Kawasaki")) return "KAWASAKI";
-    return "SEADOO";
-  };
-
   /* ------------------ delete mutation -------------------- */
   const [deleteRent, { isLoading: deleting }] = useDeleteRentMutation();
 
@@ -100,17 +93,17 @@ export default function RentCard({
         )}
 
         {/* overlay text */}
-        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end mix-blend-difference text-white">
-          <div>
+        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end  text-white">
+          <div className="bg-black/70 px-2 rounded-md">
             <p className="text-sm uppercase tracking-wider font-medium opacity-90">
-              {jet ? getBrand(jet.name) : "SEADOO"}
+              {jet.name}
             </p>
             <h3 className="text-2xl font-bold leading-tight">
               {jet?.model ?? "GTI 130"}
             </h3>
           </div>
-          <span className="text-lg font-bold">
-            <span className="text-3xl">{jet?.hp ?? 130}</span> HP
+          <span className="text-lg font-bold bg-black/70 px-2 rounded-md">
+            <span className="text-3xl">{jet?.hp}</span> HP
           </span>
         </div>
       </div>

@@ -12,8 +12,12 @@ interface Plan {
   remainingCredits: number | undefined;
   id?: string | number;
   title?: string;
-  type?:string,
+  stripePaymentIntentId?: string;
+  adventurePurchaseId?: string;
+  subscriptionPurchaseId?: string;
+  type?: string;
   startDate?: string | Date | null;
+  bookingDate?: string | Date | null;
   endDate?: string | Date | null;
   ridesCompleted?: number;
   ridesLeft?: number;
@@ -26,27 +30,31 @@ export default function ActivePlan({ allPlan }: { allPlan?: Plan[] }) {
     { title: "Plan Type", dataIndex: "planType" },
     { title: "Jetski model", dataIndex: "plan" },
     { title: "Starting Date", dataIndex: "start" },
-    { title: "Expire Date", dataIndex: "end" },
-    { title: "Ride Complete", dataIndex: "done", align: "center" },
-    { title: "Ride Remaining", dataIndex: "left", align: "center" },
+    { title: "Expire Date", dataIndex: "start" },
   ];
+
+  console.log("all plans for me", allPlan);
 
 const rows = Array.isArray(allPlan)
   ? allPlan.map((s, i) => {
       // Determine planType based on `type` field
-      let planType = "Rent"; // default
-      if (s.type === "recurring") {
-        planType = "Subscription";
-      } else if (s.type === "ontime") {
-        planType = "Adventure Pack";
-      }
+    let planType = "Rent"; // default
+
+    if (s.subscriptionPurchaseId) {
+      planType = "Membership Plan";
+    } else if (s.adventurePurchaseId) {
+      planType = "Adventure Pack";
+    } else if (s.stripePaymentIntentId) {
+      planType = "Rent";
+    }
+
 
       return {
         key: s._id ?? i,
         planType,
         plan: s.title || s.model || "N/A",
-        start: s.startDate
-          ? new Date(s.startDate).toLocaleDateString("en-GB")
+        start: s.bookingDate
+          ? new Date(s.bookingDate).toLocaleDateString("en-GB")
           : "--",
         end: s.endDate
           ? new Date(s.endDate).toLocaleDateString("en-GB")
@@ -65,7 +73,7 @@ const rows = Array.isArray(allPlan)
 
   return (
     <section className="mt-8">
-      <h2 className="text-xl font-semibold mb-4">Active Plan</h2>
+      <h2 className="text-xl font-semibold mb-4">Rent History</h2>
       <Table
         columns={columns}
         dataSource={rows}

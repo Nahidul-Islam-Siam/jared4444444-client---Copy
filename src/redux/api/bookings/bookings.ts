@@ -27,7 +27,14 @@ export const bookings = baseApi.injectEndpoints({
       }),
       providesTags: ["Booking"],
     }),
-
+    // get bookingForUsers
+    getBookingForUser: builder.query<TBooking[], void>({
+      query: () => ({
+        url: "/booking/get/token", // your API endpoint
+        method: "GET",
+      }),
+      providesTags: ["Booking"],
+    }),
     // delete booking
     deleteBookings: builder.mutation({
       query: (bookingId: string) => ({
@@ -43,4 +50,5 @@ export const {
   useGetAllBookingsQuery,
   useGetBookingByIdQuery, // <-- export hook
   useDeleteBookingsMutation,
+  useGetBookingForUserQuery
 } = bookings;

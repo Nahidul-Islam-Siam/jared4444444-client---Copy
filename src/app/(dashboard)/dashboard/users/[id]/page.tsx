@@ -4,20 +4,26 @@ import { useParams, useRouter } from "next/navigation";
 import { Spin, Alert, Button } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import UserCard from "@/components/cards/UserCard";
-// import ActivePlan from "@/components/pages/user profile/ActivePlan";
 import { useGetUserByIdQuery } from "@/redux/api/user/userAPi";
+import ActivePlan from "@/components/pages/user profile/ActivePlan";
+import { useGetBookingByIdQuery } from "@/redux/api/bookings/bookings";
+import ActiveSubscribePage from "@/components/pages/profile page/activePlan/activeSubscribtion";
+import ActivePlanPage from "@/components/pages/profile page/activePlan/activePlan";
 
 export default function UserDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const userId = params.id as string ;
+  const userId = params.id as string;
 
   // Fetch user data via RTK Query
   const { data, isLoading, isError } = useGetUserByIdQuery(userId);
 
   // The actual user object is inside Data[0]
   const user = data?.Data;
-  console.log("all user",user)
+
+  const { data: userInfo } = useGetBookingByIdQuery(userId);
+
+  const allPlan = [...(userInfo?.Data?.booking || [])];
 
   // Loading state
   if (isLoading) {
@@ -64,8 +70,11 @@ export default function UserDetailsPage() {
         country={user?.country}
         editable={false}
       />
-      {/* Active Plan Section */}
-      {/* <ActivePlan subscriptions={user?.subscriptionPurchaseId || []} /> */}
+
+      <ActiveSubscribePage userId={userId} />
+      <ActivePlanPage userId={userId} />
+
+      <ActivePlan allPlan={allPlan} />
     </div>
   );
 }

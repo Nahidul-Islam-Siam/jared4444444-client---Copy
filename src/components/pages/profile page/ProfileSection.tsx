@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -18,6 +17,7 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/services/user/authSlice";
 import ActiveAdventurePlanPage from "./activePlan/activePlan";
 import ActiveSubscribePage from "./activePlan/activeSubscribtion";
+import ActivePlan from "../user profile/ActivePlan";
 
 const { Title } = Typography;
 
@@ -31,11 +31,14 @@ interface JWTPayload {
 }
 
 export default function ProfileSection() {
+
+
+
   const [passwordForm] = Form.useForm();
   const [userId, setUserId] = useState<string | null>(null);
 
   // Get token from Redux state or fallback to cookies
-  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const accessToken = useAppSelector((state) => state?.auth.accessToken);
 
   // Fetch user data by ID - only run when userId is available
   const {
@@ -58,15 +61,10 @@ export default function ProfileSection() {
 
   const { data } = useGetBookingByIdQuery(bookingId);
 
-  
-
   const allPlan = [
     ...(data?.Data?.booking || []),
-    ...(data?.Data?.subscription || []),
-    ...(data?.Data?.adventure || []),
+    
   ];
-
-  console.log(allPlan, "all the data is here");
 
   useEffect(() => {
     const getUserIdFromToken = () => {
@@ -205,10 +203,9 @@ export default function ProfileSection() {
           editable={true}
         />
 
-
-
-      <ActiveAdventurePlanPage/>
-      <ActiveSubscribePage/>
+        <ActivePlan allPlan={allPlan} />
+        <ActiveAdventurePlanPage userId={bookingId} />
+        <ActiveSubscribePage userId={bookingId} />
         {/* Change Password Form */}
         <Card className="shadow-sm">
           <Title level={5} className="!text-gray-700 !mb-6 !text-xl">
@@ -312,7 +309,6 @@ export default function ProfileSection() {
         </Card>
 
         {/* Active Plan Section - Using static data as requested */}
-    
       </Container>
     </section>
   );
