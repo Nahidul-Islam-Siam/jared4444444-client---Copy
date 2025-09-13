@@ -152,15 +152,15 @@ export default function BookingModal({
 
     const payload = {
       userId,
-      rentpackId: rentId,
+      rentPackId: rentId,
       model,
       bookingDate: selectedDate,
-      price:jetPrice,
+      price: jetPrice,
       bookingTime: selectedTime,
       drivingLicense: drivingLicense.trim() || undefined,
     };
 
-    // return;
+    // return;b
 
     try {
       const response = await bookWithSubscription(payload).unwrap();
@@ -381,7 +381,7 @@ export default function BookingModal({
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-3">
-                  Select Time
+                  Select Time for pickup
                 </h3>
                 {selectedDate ? (
                   <div className="space-y-2 max-h-60 overflow-y-auto">

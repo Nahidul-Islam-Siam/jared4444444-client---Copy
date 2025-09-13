@@ -3,7 +3,7 @@ import { baseApi } from "../baseApi";
 
 export interface BookingFromSubscriptionPayload {
   userId: string;
-  rentpackId: string;     
+  rentPackId: string;     
   subscriptionPurchaseId?: string; 
   bookingDate: string;        
   bookingTime?: string;       

@@ -224,6 +224,7 @@ export interface TBooking {
   drivingLicense: string;
   status: BookingStatus;
   price: number;
+  maintenance: boolean;
   totalPrice: number;
   refundableDeposit?: number;
   refundableBound: boolean;

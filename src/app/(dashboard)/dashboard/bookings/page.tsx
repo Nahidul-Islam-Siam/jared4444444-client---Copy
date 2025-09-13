@@ -56,7 +56,8 @@ export default function BookingsPage() {
       ? "Adventure Pack"
       : b?.subscriptionPurchaseId
       ? "Subscription"
-      : "Rental", // <-- add bookingType here
+      : "Rental", 
+    maintenance: b.maintenance,
   }));
 
   const [deleteBooking] = useDeleteBookingsMutation();
@@ -115,14 +116,23 @@ export default function BookingsPage() {
     {
       title: "Booking Type",
       dataIndex: "bookingType",
-      render: (type: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      render: (type: string, record: any) => {
         let color = "default"; // default color
+        let statusText = type;
 
+        // Handle the booking type
         if (type === "Adventure Pack") color = "green";
         else if (type === "Subscription") color = "blue";
         else if (type === "Rental") color = "orange";
 
-        return <Tag color={color}>{type}</Tag>;
+        // If maintenance is true, show green and the maintenance text
+        if (record.maintenance) {
+          color = "red"; // green color for maintenance
+          statusText = "Maintenance"; // override the status text
+        }
+
+        return <Tag color={color}>{statusText}</Tag>;
       },
     },
     { title: "Driving License", dataIndex: "drivingLicense" },
