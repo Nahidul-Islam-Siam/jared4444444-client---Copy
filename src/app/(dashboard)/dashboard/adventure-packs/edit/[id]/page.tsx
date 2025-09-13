@@ -38,7 +38,8 @@ export default function EditAdventurePack() {
   const jetSkis = jetData?.Data ?? [];
 
   // Extract the actual adventure pack object from Data
-  const pack = packData?.data; // ← Critical fix: was using packData directly
+  const pack = packData?.Data; // ← Critical fix: was using packData directly
+
 
   /* ---------- Build initial values ---------- */
   const initialValues = pack

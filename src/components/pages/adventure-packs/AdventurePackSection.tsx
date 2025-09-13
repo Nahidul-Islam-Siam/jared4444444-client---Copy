@@ -21,12 +21,12 @@ import {
 
 const AdventurePackSection = () => {
   const swiperRef = useRef<SwiperType | null>(null);
-  const { data: allAdventurePacks = [], isLoading } = 
+  const { data: allAdventurePacks = [], isLoading } =
     useGetAllAdventurePacksQuery({});
 
   const handleBooking = (pack: TAdventurePack) => {
+    // router.push(`/adventure-packs/${pack?._id}/book`);
     console.log("Booking adventure pack:", pack);
-    // router.push(`/adventure-packs/${pack._id}/book`);
   };
 
   if (isLoading) {
@@ -86,18 +86,19 @@ const AdventurePackSection = () => {
             className="!pb-16 !pt-2"
           >
             {allAdventurePacks.map((pack: TAdventurePack) => (
-              <SwiperSlide key={pack._id} className="cursor-pointer">
+              <SwiperSlide key={pack?._id} className="cursor-pointer">
                 <AdventureCard
-                  packId={pack._id}
-                  title={pack.title}
-                  discountPercentage={pack.discountPercentage}
-                  ridesPricing3={pack.ridesPricing3}
-                  ridesPricing5={pack.ridesPricing5}
-                  ridesPricing10={pack.ridesPricing10}
-                  refundAmount={pack.refundAmount}
-                  image={pack.images?.[0]}
+                  packId={pack?._id}
+                  title={pack?.title}
+                  discountPercentage={pack?.discountPercentage}
+                  ridesPricing3={pack?.ridesPricing3}
+                  ridesPricing5={pack?.ridesPricing5}
+                  ridesPricing10={pack?.ridesPricing10}
+                  refundAmount={pack?.refundAmount}
+                  image={pack?.jet_skyId?.images?.[0]}
+                  name={pack?.jet_skyId?.name}
                   isDashboard={false}
-                  model={pack.jet_skyId?.model}
+                  model={pack?.jet_skyId?.model}
                   onClick={() => handleBooking(pack)}
                 />
               </SwiperSlide>

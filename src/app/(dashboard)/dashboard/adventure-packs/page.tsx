@@ -107,12 +107,13 @@ export default function AdventurePackList() {
                   key={pack._id}
                   packId={pack._id}
                   title={pack.title}
+                  name={pack?.jet_skyId?.name}
                   discountPercentage={pack.discountPercentage}
                   ridesPricing3={pack.ridesPricing3}
                   ridesPricing5={pack.ridesPricing5}
                   ridesPricing10={pack.ridesPricing10}
                   refundAmount={pack.refundAmount}
-                  // model={pack.jet_skyId?.model}
+                  model={pack.jet_skyId?.model}
 
                   image={
                     typeof pack.jet_skyId === "object"

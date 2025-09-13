@@ -36,7 +36,7 @@ export type TSingleAdventurePack = {
   success: boolean;
   statusCode: number;
   message: string;
-  data: TAdventurePack; // <-- lowercase!
+  Data: TAdventurePack; // <-- lowercase!
 };
 
 export type TAdventurePackPayload = Partial<

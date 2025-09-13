@@ -73,7 +73,7 @@ const rows = Array.isArray(allPlan)
 
   return (
     <section className="mt-8">
-      <h2 className="text-xl font-semibold mb-4">Rent History</h2>
+      <h2 className="text-xl font-semibold mb-4">Booking History</h2>
       <Table
         columns={columns}
         dataSource={rows}

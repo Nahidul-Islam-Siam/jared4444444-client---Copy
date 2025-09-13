@@ -19,7 +19,7 @@ export default function ActiveSubscribePage({
       (sub: any) => sub.userId?._id === userId && sub.status === "active"
     ) || [];
 
-  console.log(subscriptionData);
+  console.log("all the subscription", subscriptionData);
 
   if (isLoading) {
     return (
@@ -37,7 +37,7 @@ export default function ActiveSubscribePage({
       <div className="bg-background">
         <div className="max-w-7xl mx-auto p-6">
           <h1 className="text-3xl font-bold">Active Plan</h1>
-          <p className="text-red-500">Failed to load your adventure plans.</p>
+          <p className="text-red-500">Failed to load your sub plans.</p>
         </div>
       </div>
     );
@@ -49,47 +49,42 @@ export default function ActiveSubscribePage({
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
-            Active Subscription Plans
+            Active Membership Plans
           </h1>
           <p className="text-muted-foreground mt-2">
-            Below are your currently active Subscription packs.
+            Below are your currently active Membership packs.
           </p>
         </div>
 
-        {/* List of Active Adventure Packs */}
+        {/* List of Active sub Packs */}
         {subscriptionData.length === 0 ? (
           <div className="bg-white border border-gray-200 p-6 rounded-[15px] shadow-md text-center">
-            <p className="text-card-foreground">
-              No active adventure packs found.
-            </p>
+            <p className="text-card-foreground">No active sub packs found.</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {subscriptionData.map((adventure: any) => {
-              const pack = adventure.adventurePackId;
-              // const jetSkyModel = adventure.model || pack?.model || "Unknown Model";
-              const startDate = new Date(
-                adventure.startDate
-              ).toLocaleDateString();
-              const expiryDate = new Date(
-                adventure.expiryDate
-              ).toLocaleDateString();
+            {subscriptionData.map((sub: any) => {
+              // const jetSkyModel = sub?.model || pack?.model || "Unknown Model";
+              const startDate = new Date(sub?.startDate).toLocaleDateString();
+              const expiryDate = new Date(sub?.expiryDate).toLocaleDateString();
 
               return (
                 <div
-                  key={adventure._id}
+                  key={sub?._id}
                   className="bg-white border border-white p-6 rounded-[15px] shadow-md"
                 >
                   <div className="grid grid-cols-5 gap-6">
-                    {/* Adventure Pack Name */}
+                    {/* sub Pack Name */}
                     <div className="space-y-2">
                       {/* <h3 className="text-sm font-medium text-muted-foreground">
-                        Adventure Pack
+                        sub Pack
                       </h3> */}
                       <p className="font-semibold text-card-foreground">
-                        {pack?.title || "Subscription Id"}
+                        Membership Name
                       </p>
-                      <p className="text-xs text-gray-500">{adventure._id}</p>
+                      <p className="text-xs text-gray-500">
+                        {sub?.membershipId?.description}
+                      </p>
                     </div>
 
                     {/* Starting Date */}
@@ -118,7 +113,7 @@ export default function ActiveSubscribePage({
                         Rides Used
                       </h3>
                       <p className="text-sm font-semibold text-primary">
-                        {adventure.purchesCredits - adventure.remainingCredits}
+                        {sub?.purchesCredits - sub?.remainingCredits}
                       </p>
                     </div>
 
@@ -128,7 +123,7 @@ export default function ActiveSubscribePage({
                         Rides Remaining
                       </h3>
                       <p className="text-sm font-semibold text-accent">
-                        {adventure.remainingCredits}
+                        {sub?.remainingCredits}
                       </p>
                     </div>
                   </div>

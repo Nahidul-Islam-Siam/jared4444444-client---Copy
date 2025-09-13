@@ -13,6 +13,7 @@ import { useDeleteAdventurePackMutation } from "@/redux/api/adventurePack/advent
 interface Props {
   packId: string; // ← add pack ID
   title: string;
+  name?: string;
   discountPercentage: number;
   ridesPricing3: number;
   ridesPricing5: number;
@@ -34,6 +35,7 @@ export default function AdventureCard({
   ridesPricing10,
   refundAmount,
   model,
+  name,
   image,
   isDashboard = false,
   onClick,
@@ -130,6 +132,10 @@ export default function AdventureCard({
 
         {/* content */}
         <div className="text-white p-6 space-y-4 bg-black/70">
+          <div className="flex gap-2 text-2xl font-bold">
+            <h1>{model}</h1>
+            <h1>{name}</h1>
+          </div>
           {/* pricing list */}
           <ul className="space-y-1 text-base">
             <li>3 Rides ${ridesPricing3}</li>
