@@ -31,9 +31,6 @@ interface JWTPayload {
 }
 
 export default function ProfileSection() {
-
-
-
   const [passwordForm] = Form.useForm();
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -59,12 +56,9 @@ export default function ProfileSection() {
   const bookingId = user?._id as string;
   console.log(bookingId, "all the data is here");
 
-  const { data } = useGetBookingByIdQuery(bookingId);
+  const { data, isLoading } = useGetBookingByIdQuery(bookingId);
 
-  const allPlan = [
-    ...(data?.Data?.booking || []),
-    
-  ];
+  const allPlan = [...(data?.Data?.booking || [])];
 
   useEffect(() => {
     const getUserIdFromToken = () => {
@@ -203,7 +197,8 @@ export default function ProfileSection() {
           editable={true}
         />
 
-        <ActivePlan allPlan={allPlan} />
+   
+
         <ActiveAdventurePlanPage userId={bookingId} />
         <ActiveSubscribePage userId={bookingId} />
         {/* Change Password Form */}
